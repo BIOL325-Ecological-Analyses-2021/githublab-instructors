@@ -1,0 +1,91 @@
+---
+title: "GitHub Demonstration"
+author: "Eduardo Martins"
+date: "19/02/2021"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(broom)
+library(knitr)
+ant <- read.csv("ant_data.csv")
+```
+
+# Background
+
+This is a demonstration of the use of GitHub for collaboration. In this R Markdown file, we will be analzying the ant dataset shown in the lecture about multiple regression.
+
+# Data analysis
+
+```{r correlation-plot, include = FALSE}
+ggplot(ant, aes(x = lat, y = alt)) + 
+  geom_point() +
+  xlab("Degrees N Latitude") +
+  ylab("Altitude (m)") +
+  theme_bw()
+
+cor.test(ant$lat, ant$alt)
+```
+
+The following model was fitted to the data:
+
+$y_{i}\sim Normal \left (\mu_{i}, \sigma \right )$
+
+$\mu_{i} = \beta_{0} + \beta_{lat}x_{lat,i} + \beta_{alt}x_{alt,i}$
+
+where $y_{i}$ is the logarithm of the number of ant species at location $i$; $\beta_{0}$ is the model intercept; $\beta_{lat}$ and $\beta_{alt}$ are the model slopes for latitude and altitude, respectively; $x_{lat, i}$ and $x_{alt, i}$ are the latitude and altitude at location $i$; and $\sigma$ is the standard deviation of model residuals.
+
+```{r multiple-regression, include = FALSE}
+mlr <- lm(log10(spp) ~ lat + alt, data = ant)  
+par(mfrow = c(1,3))
+plot(mlr, which = 1:2)
+hist(resid(mlr), xlab = "Residuals")
+```
+
+# Results
+
+Here we would describe the results and refer to the model output and plots with observed data and fitted values.
+
+```{r tables}
+kable(tidy(mlr), col.names = c("Parameter", "Estimate", "SE", "t", "P-value"), 
+      align = "cc", 
+      caption = "Table 1. Estimates of intercept and slope.",
+      digits= 2)
+```
+
+
+````{r fitted-plot, fig.cap = 'Figure 2. Relationship between the log number of ant species and latitude.'}
+new_dat <- expand.grid(lat = seq(min(ant$lat), max(ant$lat), 0.1), 
+                       alt = 0)
+
+ci <- predict(mlr, newdata = new_dat, interval = "confidence")
+
+pi <- predict(mlr, newdata = new_dat, interval = "prediction")
+
+df <- data.frame(lat = new_dat$lat, 
+                 alt = new_dat$alt,
+                 fit = ci[, "fit"],
+                 ci_lwr = ci[, "lwr"],
+                 ci_upr = ci[, "upr"],
+                 pi_lwr = pi[, "lwr"],
+                 pi_upr = pi[, "upr"]) %>%
+  mutate(lat = lat * sd(ant$lat) + mean(ant$lat),
+         alt = alt * sd(ant$alt) + mean(ant$alt))
+
+ggplot(ant, aes(x = lat, y = log10(spp))) +
+  geom_point(colour = "red") +
+  geom_line(data = df, aes(x = lat, y = fit)) +
+  geom_line(data = df, aes(x = lat, y = ci_lwr), linetype = "dashed") +
+  geom_line(data = df, aes(x = lat, y = ci_upr), linetype = "dashed") +
+  geom_line(data = df, aes(x = lat, y = pi_lwr), linetype = "dotted") +
+  geom_line(data = df, aes(x = lat, y = pi_upr), linetype = "dotted") +
+  ylab("log10(S)") +
+  xlab("Degrees N latitude") +
+  theme_bw()
+```
+
+

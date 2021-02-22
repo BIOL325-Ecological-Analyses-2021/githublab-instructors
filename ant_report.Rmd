@@ -42,7 +42,7 @@ $\mu_{i} = \beta_{0} + \beta_{lat}x_{lat,i} + \beta_{alt}x_{alt,i}$
 where $y_{i}$ is the logarithm of the number of ant species at location $i$; $\beta_{0}$ is the model intercept; $\beta_{lat}$ and $\beta_{alt}$ are the model slopes for latitude and altitude, respectively; $x_{lat, i}$ and $x_{alt, i}$ are the latitude and altitude at location $i$; and $\sigma$ is the standard deviation of model residuals.
 
 ```{r multiple-regression, include = FALSE}
-mlr <- lm(log10(spp) ~ lat + alt, data = ant)  
+mlr <- lm(log10(spp) ~ zlat + zalt, data = ant) 
 par(mfrow = c(1,3))
 plot(mlr, which = 1:2)
 hist(resid(mlr), xlab = "Residuals")
@@ -61,22 +61,22 @@ kable(tidy(mlr), col.names = c("Parameter", "Estimate", "SE", "t", "P-value"),
 
 
 ````{r fitted-plot, fig.cap = 'Figure 2. Relationship between the log number of ant species and latitude.'}
-new_dat <- expand.grid(lat = seq(min(ant$lat), max(ant$lat), 0.1), 
-                       alt = 0)
+new_dat <- expand.grid(zlat = seq(min(ant$zlat), max(ant$zlat), 0.1), 
+                       zalt = 0)
 
 ci <- predict(mlr, newdata = new_dat, interval = "confidence")
 
 pi <- predict(mlr, newdata = new_dat, interval = "prediction")
 
-df <- data.frame(lat = new_dat$lat, 
-                 alt = new_dat$alt,
+df <- data.frame(zlat = new_dat$zlat, 
+                 zalt = new_dat$zalt,
                  fit = ci[, "fit"],
                  ci_lwr = ci[, "lwr"],
                  ci_upr = ci[, "upr"],
                  pi_lwr = pi[, "lwr"],
                  pi_upr = pi[, "upr"]) %>%
-  mutate(lat = lat * sd(ant$lat) + mean(ant$lat),
-         alt = alt * sd(ant$alt) + mean(ant$alt))
+  mutate(lat = zlat * sd(ant$lat) + mean(ant$lat),
+         alt = zalt * sd(ant$alt) + mean(ant$alt))
 
 ggplot(ant, aes(x = lat, y = log10(spp))) +
   geom_point(colour = "red") +

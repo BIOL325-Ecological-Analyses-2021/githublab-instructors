@@ -12,7 +12,9 @@ knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(broom)
 library(knitr)
-ant <- read.csv("ant_data.csv")
+ant <- read.csv("ant_data.csv") %>%
+  mutate(zlat = (lat - mean(lat)) / sd(lat),
+         zalt = (alt - mean(alt)) / sd(alt))
 ```
 
 # Background
